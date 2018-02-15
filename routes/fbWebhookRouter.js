@@ -9,7 +9,7 @@ const fbWebhookRouter = express.Router();
 
 const pubsub = PubSub({
     projectId: config.GOOGLE_CLOUD_PROJECT_ID,
-    keyFilename: config.GOOGLE_CLOUD_SERVICE_ACCOUNT_FILE
+    keyFilename: path.join(__dirname, 'config', config.GOOGLE_CLOUD_SERVICE_ACCOUNT_FILE)
 });
 
 const topic = pubsub.topic(config.GOOGLE_CLOUD_TOPIC);
