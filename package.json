@@ -1,0 +1,21 @@
+{
+  "name": "facebook-webhook",
+  "version": "0.0.0",
+  "description": "Generic facebook webhook forwarding facebook data to google cloud pubsub messaging",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "author": "Adam Bezecny",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/pubsub": "^0.16.3",
+    "body-parser": "~1.18.2",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "express": "~4.15.5",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.0",
+    "serve-favicon": "~2.4.5"
+  }
+}
