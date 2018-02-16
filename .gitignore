@@ -2,3 +2,4 @@ node_modules/
 .vscode/
 /config/config.js
 /config/gcloud-service-account.json
+/log/*.log

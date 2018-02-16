@@ -3,6 +3,8 @@
 const path     = require('path');
 const express  = require('express');
 var bodyParser = require('body-parser');
+let log4js = require('log4js-config');
+let logger = log4js.get('[fbWebhookRouter]');
 const config   = require('../config/config');
 const PubSub   = require('@google-cloud/pubsub');
 
@@ -19,7 +21,8 @@ fbWebhookRouter.use(bodyParser.json());
 
 fbWebhookRouter.route("/")
 .get((req,res,next) => {
-    console.log("fbwebhook get handler called");
+    //console.log("fbwebhook get handler called");
+    logger.info("fbwebhook get handler called");
 
     let hubChallenge = req.query['hub.challenge'];
     let hubMode = req.query['hub.mode'];
@@ -33,19 +36,22 @@ fbWebhookRouter.route("/")
 
 })
 .post((req,res,next) => {
-    console.log("fbwebhook post handler called");
+    //console.log("fbwebhook post handler called");
+    logger.info("fbwebhook post handler called");
 
     if (req.body.object === 'page') {
         req.body.entry.forEach(entry => {
 
             entry.messaging.forEach(event => {
                 if (event.message && event.message.text) {
-                    console.log("Forwarding to gcloud facebook event: " + JSON.stringify(event));
+                    //console.log("Forwarding to gcloud facebook event: " + JSON.stringify(event));
+                    logger.info("Forwarding to gcloud facebook event: " + JSON.stringify(event));
                     topic.publish({
                         data: event
                       }, (err) => {
                         if (err) {
-                          console.log("Error when publishing to gcloud" + JSON.stringify(err));  
+                          //console.log("Error when publishing to gcloud" + JSON.stringify(err));  
+                          logger.info("Error when publishing to gcloud" + JSON.stringify(err));
                           next(err);
                           return;
                         }

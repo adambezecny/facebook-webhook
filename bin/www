@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('facebook-webhook:server');
 var http = require('http');
+var log4js = require('log4js-config');
+var logger = log4js.get('[www]');
 
 /**
  * Get port from environment and store in Express.
@@ -87,5 +89,6 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
-  console.log('Listening on ' + bind);
+  //console.log('Listening on ' + bind);
+  logger.info('Listening on ' + bind)
 }
