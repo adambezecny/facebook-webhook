@@ -2,7 +2,8 @@
 
 const path     = require('path');
 const express  = require('express');
-const request  = require("request")
+const request  = require("request");
+const requestp = require("request-promise");
 var bodyParser = require('body-parser');
 let log4js     = require('log4js-config');
 let logger     = log4js.get('[fbWebhookRouter]');
@@ -36,8 +37,29 @@ function doFBSubscribeRequest() {
     });
   }
   
- 
-doFBSubscribeRequest();
+//do we need this? 
+//doFBSubscribeRequest();
+
+const sendTextMessage = (senderId, text) => {
+    let echoText = "ECHO "+text;
+    requestp({
+        uri: "https://graph.facebook.com/v"+  FB_GRAPH_API_VERSION + "/me/messages",
+        qs: { access_token: config.FACEBOOK_PAGE_ACCESS_TOKEN },
+        "json": true,
+        method: 'POST',
+        body: {
+            recipient: { id: senderId },
+            message: { text: echoText }
+        }
+    })
+    .then((parsedBody) => {
+        logger.info("sendTextMessage OK");
+    })
+    .catch((err) => {
+        logger.error("sendTextMessage KO " + JSON.stringify(err));
+    });
+}
+
 
 const topic = pubsub.topic(config.GOOGLE_CLOUD_TOPIC);
 
@@ -53,8 +75,10 @@ fbWebhookRouter.route("/")
     let verifyTokenMatches = (req.query['hub.verify_token'] === config.FACEBOOK_VERIFICATION_TOKEN);
 
     if (hubMode && verifyTokenMatches) {
+        logger.info("token validated");
         res.status(200).send(hubChallenge);
     } else {
+        logger.error("token not validated");
         res.status(403).end();
     }    
 
@@ -70,20 +94,31 @@ fbWebhookRouter.route("/")
                 if (event.message && event.message.text) {
                     //console.log("Forwarding to gcloud facebook event: " + JSON.stringify(event));
                     logger.info("Forwarding to gcloud facebook event: " + JSON.stringify(event));
-                    topic.publish({
+                   
+                   /**/ topic.publish({
                         data: event
                       }, (err) => {
                         if (err) {
                           //console.log("Error when publishing to gcloud" + JSON.stringify(err));  
-                          logger.info("Error when publishing to gcloud" + JSON.stringify(err));
+                          logger.error("Error when publishing to gcloud" + JSON.stringify(err));
                           next(err);
                           return;
+                        }else {
+                            logger.info("google pub/sub ok!");
                         }
                       });
+                      
+                      //simple echo functionality
+                      //let sender = event.sender.id;
+                      //let text = event.message.text;
+                      //sendTextMessage(sender, text);
+                      //logger.info("echo message sent back to FB");
+
                 }
             });
 
         });
+        logger.info("sending HTTP 200/OK back to FB.");
         res.status(200).end();    
     }    
 

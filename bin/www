@@ -23,6 +23,19 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
+
+
+
+var shutdown = function (err) {
+  if (err) {
+    logger.error('>>>>>>>>>Uncaught exception:<<<<<<<<<<<\n', JSON.stringify(err));
+  }
+}
+
+// does not work in Cygwin (kill process manually, e.g. from Windows cmd by 'taskkill /f /im node.exe')
+process.on('uncaughtException', shutdown);
+
+
 /**
  * Listen on provided port, on all network interfaces.
  */
