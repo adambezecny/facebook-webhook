@@ -14,11 +14,29 @@ const FB_GRAPH_API_VERSION = "2.11"
 
 const fbWebhookRouter = express.Router();
 
+
+function publishedHandler(err, messageIds, responseBody) {
+    if (err) {
+        
+        logger.error("publishedHandler: " + JSON.stringify(err));
+        
+    }
+    logger.info("publishedHandler OK " + messagesIds);
+}
+
+function subscriptionHandler(err, subscription, responseBody) {
+    if (err) {
+        logger.error("subscriptionHandler: " + JSON.stringify(err));
+    }
+    logger.info("subscriptionHandler OK " + responseBody);
+}
+
 const pubsub = PubSub({
     projectId: config.GOOGLE_CLOUD_PROJECT_ID,
-    keyFilename: path.join(__dirname, 'config', config.GOOGLE_CLOUD_SERVICE_ACCOUNT_FILE)
+    keyFilename: path.join(__dirname, '..', 'config', config.GOOGLE_CLOUD_SERVICE_ACCOUNT_FILE)
 });
 
+const topic = pubsub.topic(config.GOOGLE_CLOUD_TOPIC);
 
 function doFBSubscribeRequest() {
     request({
@@ -61,13 +79,10 @@ const sendTextMessage = (senderId, text) => {
 }
 
 
-const topic = pubsub.topic(config.GOOGLE_CLOUD_TOPIC);
-
 fbWebhookRouter.use(bodyParser.json());
 
 fbWebhookRouter.route("/")
 .get((req,res,next) => {
-    //console.log("fbwebhook get handler called");
     logger.info("fbwebhook get handler called");
 
     let hubChallenge = req.query['hub.challenge'];
@@ -84,7 +99,6 @@ fbWebhookRouter.route("/")
 
 })
 .post((req,res,next) => {
-    //console.log("fbwebhook post handler called");
     logger.info("fbwebhook post handler called");
 
     if (req.body.object === 'page') {
@@ -92,21 +106,18 @@ fbWebhookRouter.route("/")
 
             entry.messaging.forEach(event => {
                 if (event.message && event.message.text) {
-                    //console.log("Forwarding to gcloud facebook event: " + JSON.stringify(event));
-                    logger.info("Forwarding to gcloud facebook event: " + JSON.stringify(event));
-                   
-                   /**/ topic.publish({
-                        data: event
-                      }, (err) => {
-                        if (err) {
-                          //console.log("Error when publishing to gcloud" + JSON.stringify(err));  
-                          logger.error("Error when publishing to gcloud" + JSON.stringify(err));
-                          next(err);
-                          return;
-                        }else {
-                            logger.info("google pub/sub ok!");
-                        }
-                      });
+                    logger.info("Forwarding the facebook event to gcloud topic : " + JSON.stringify(event));
+
+                    topic.publisher().publish(
+                        Buffer.from(JSON.stringify(event))
+                    )
+                    .then(results => {
+                        logger.info("google cloud topic publication ok!");
+                    })
+                    .catch(err => {
+                        logger.error("Error when publishing to gcloud" + JSON.stringify(err));
+                        next(err);
+                    });                    
                       
                       //simple echo functionality
                       //let sender = event.sender.id;
@@ -118,7 +129,7 @@ fbWebhookRouter.route("/")
             });
 
         });
-        logger.info("sending HTTP 200/OK back to FB.");
+        
         res.status(200).end();    
     }    
 
