@@ -38,26 +38,6 @@ const pubsub = PubSub({
 
 const topic = pubsub.topic(config.GOOGLE_CLOUD_TOPIC);
 
-function doFBSubscribeRequest() {
-    request({
-      method: "POST",
-      url: "https://graph.facebook.com/v" + FB_GRAPH_API_VERSION + "/me/subscribed_apps",
-      qs: {
-        access_token: config.FACEBOOK_PAGE_ACCESS_TOKEN
-      }
-    }, function (error, response, body) {
-      if (error || body.error) {
-        var err = error ? error : body.error
-        logger.error("Error in doFBSubscribeRequest " + JSON.stringify(err));
-      } else {
-        logger.info("Subscription to Facebook result:", response.body);
-      }
-    });
-  }
-  
-//do we need this? 
-//doFBSubscribeRequest();
-
 const sendTextMessage = (senderId, text) => {
     let echoText = "ECHO "+text;
     requestp({
